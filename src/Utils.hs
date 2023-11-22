@@ -27,19 +27,31 @@ data Direction8 =
   deriving (Show, Eq)
 
 moveD4 :: Int -> Coord2 -> Direction4 -> Coord2
-moveD4 = undefined
+moveD4 n (x, y) Up = (x, y + n)
+moveD4 n (x, y) Right = (x + n, y)
+moveD4 n (x, y) Down = (x, y - n)
+moveD4 n (x, y) Left = (x - n, y)
 
 moveD4' :: Movement4 -> Coord2 -> Coord2
-moveD4' = undefined
+moveD4' movement coord = moveD4 (distance movement) coord (direction movement) 
 
 stepD4 :: Coord2 -> Direction4 -> Coord2
-stepD4 = undefined
+stepD4 (x, y) Up = (x, y + 1)
+stepD4 (x, y) Right = (x + 1, y)
+stepD4 (x, y) Down = (x, y - 1)
+stepD4 (x, y) Left = (x - 1, y)
 
 stepD4f :: Coord2f -> Direction4 -> Coord2f
-stepD4f = undefined
+stepD4f (x, y) Up = (x, y + 1)
+stepD4f (x, y) Right = (x + 1, y)
+stepD4f (x, y) Down = (x, y - 1)
+stepD4f (x, y) Left = (x - 1, y)
 
 moveD4f :: Double -> Coord2f -> Direction4 -> Coord2f
-moveD4f = undefined
+moveD4f n (x, y) Up = (x, y + n)
+moveD4f n (x, y) Right = (x + n, y)
+moveD4f n (x, y) Down = (x, y - n)
+moveD4f n (x, y) Left = (x - n, y)
 
 manhattanDistance :: Coord2 -> Coord2 -> Int
 manhattanDistance (x1, y1) (x2, y2) = abs (x2 - x1) + abs (y2 - y1)
