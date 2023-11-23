@@ -27,37 +27,61 @@ cons' x xs = Cons x xs
 -- Module 1 Lecture 2
 -- Basic Recursion
 atIndex :: MyList a -> Int -> a
-atIndex = undefined
+atIndex Nil _ = error "No atIndex on empty list"
+atIndex (Cons x xs) n =
+  if n == 0
+    then x
+    else atIndex xs (n - 1)
 
 last' :: MyList a -> a
-last' = undefined
+last' Nil = error "No last on empty list"
+last' (Cons x Nil) = x
+last' (Cons x xs) = last' xs
 
-
+-- Description in exercises is wrong
+-- We're looking for the first element that satisfies the predicate.
 find' :: (a -> Bool) -> MyList a -> Maybe a
-find' = undefined
-
+find' _ Nil = Nothing
+find' pred (Cons x xs) = 
+  if pred x
+    then Just x
+    else find' pred xs
 
 elem' :: (Eq a) => a -> MyList a -> Bool
-elem' = undefined
-
+elem' _ Nil = False
+elem' y (Cons x xs) = (x == y) || elem' y xs
 
 and' :: MyList Bool -> Bool
-and' = undefined
+and' Nil = True
+and' (Cons x xs) = 
+  if x
+    then and' xs
+    else False
 
 or' :: MyList Bool -> Bool
-or' = undefined
+or' Nil = False
+or' (Cons x xs) = x || or' xs
 
 any' :: (a -> Bool) -> MyList a -> Bool
-any' = undefined
+any' _ Nil = False
+any' pred (Cons x xs) = pred x || any' pred xs
 
 all' :: (a -> Bool) -> MyList a -> Bool
-all' = undefined
+all' _ Nil = True
+all' pred (Cons x xs) = pred x && all' pred xs
 
 isPrefixOf' :: (Eq a) => MyList a -> MyList a -> Bool
-isPrefixOf' = undefined
+isPrefixOf' Nil _ = True
+isPrefixOf' (Cons _ _) Nil = False
+isPrefixOf' (Cons x xs) (Cons y ys) = x == y && isPrefixOf' xs ys
 
 isInfixOf' :: (Eq a) => MyList a -> MyList a -> Bool
-isInfixOf' = undefined
+isInfixOf' Nil _ = True
+isInfixOf' (Cons _ _) Nil = False
+isInfixOf' ls@(Cons x xs) ls'@(Cons y ys) =
+  -- (x == y && isPrefixOf' xs ys) || isInfixOf' ls ys
+  isPrefixOf' ls ls' || isInfixOf' ls ys
+ 
 
 -- Module 1 Lecture 3
 -- Recusion with Accumulation

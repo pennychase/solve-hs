@@ -8,22 +8,45 @@ import qualified Data.List as L
 import Data.Word (Word8, Word)
 
 parallelCars :: (Word, Word) -> (Word, Word) -> Bool
-parallelCars (x1, v1) (x2, v2) = undefined
+parallelCars (x1, v1) (x2, v2) 
+  | x1 == x2 = True
+  | x1 > x2 && v1 > v2 = False
+  | x2 > x1 && v2 > v1 = False
+  | otherwise = parallelCars (x1 + v1, v1) (x2 + v2, v2)
+
 
 findKey :: String -> String -> Bool
-findKey = undefined
+findKey [] _ = True
+findKey (x : xs) str = elem x str && findKey xs str
 
 firstProperFactor :: [Int] -> Maybe Int
-firstProperFactor = undefined
+firstProperFactor [] = Nothing
+firstProperFactor nums = 
+  let
+    num = last nums
+    ns = init nums
+  in L.find (\n -> n < num && num `mod` n == 0) ns  
 
 areAllFactors :: [Int] -> [Int] -> Bool
-areAllFactors factors numbers = undefined
+areAllFactors factors numbers = 
+  all (\n -> s `mod` n == 0) nums
+  where
+    s = sum numbers
+    nums = map (numbers !!) factors
 
 hasIncrementingList :: [Int] -> [Int] -> Bool
-hasIncrementingList starts numbers = undefined
+hasIncrementingList starts numbers = 
+  any (\n -> L.isInfixOf [n, n+1, n+2] numbers) starts
 
 hashUntilIncrement :: ByteString -> Int -> Int
-hashUntilIncrement key initial = undefined
+hashUntilIncrement key initial = 
+  case first3 (mkHash key initial) of
+      Just triple -> if consecutive triple
+                        then initial 
+                        else hashUntilIncrement key (initial + 1)
+      Nothing -> hashUntilIncrement key (initial + 1)
+  where
+    consecutive (x, y, z) = x + 1 == y && y + 1 == z
 
 first3 :: ByteString -> Maybe (Word8, Word8, Word8)
 first3 bs = case take 3 (BS.unpack bs) of
