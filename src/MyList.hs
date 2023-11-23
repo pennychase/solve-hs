@@ -79,29 +79,39 @@ isInfixOf' :: (Eq a) => MyList a -> MyList a -> Bool
 isInfixOf' Nil _ = True
 isInfixOf' (Cons _ _) Nil = False
 isInfixOf' ls@(Cons x xs) ls'@(Cons y ys) =
-  -- (x == y && isPrefixOf' xs ys) || isInfixOf' ls ys
   isPrefixOf' ls ls' || isInfixOf' ls ys
  
 
 -- Module 1 Lecture 3
 -- Recusion with Accumulation
 length' :: MyList a -> Int
-length' = undefined
+length' Nil = 0
+length' (Cons x xs) = 1 + length' xs
 
 sum' :: MyList Int -> Int
-sum' = undefined
+sum' Nil = 0
+sum' (Cons x xs) = x + sum' xs
 
 product' :: MyList Int -> Int
-product' = undefined
+product' Nil = 1
+product' (Cons x xs) = x * product' xs
 
 maximum' :: (Ord a) => MyList a -> a
-maximum' = undefined
+maximum' Nil = error "Can't apply maximum' to empty list"
+maximum' (Cons x Nil) = x
+maximum' (Cons x xs) = max x (maximum' xs)
 
 minimum' :: (Ord a) => MyList a -> a
-minimum' = undefined
+minimum' Nil = error "Can't apply minimum' to empty list"
+minimum' (Cons x Nil) = x
+minimum' (Cons x xs) = min x (minimum' xs)
 
 elemIndex' :: (Eq a) => a -> MyList a -> Maybe Int
-elemIndex' = undefined
+elemIndex' _ Nil = Nothing
+elemIndex' y (Cons x xs) = 
+  if x == y 
+    then Just 0 
+    else (1+) <$> elemIndex' y xs
 
 -- Module 1 Lecture 4
 -- Tail Recursion
