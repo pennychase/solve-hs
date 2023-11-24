@@ -8,10 +8,8 @@ makeDigits num =
     num `mod` 10 : makeDigits (num `div` 10)
 
 buildNumber :: [Word] -> Word
-buildNumber digits = go digits (length digits - 1) 
-    where
-        go [] _ = 0
-        go (d:ds) e = d * (10 ^ e) + go ds (e - 1)
+buildNumber [] = 0
+buildNumber (d:ds) = d * (10 ^ length ds) + buildNumber ds
 
 elevation :: String -> Int
 elevation [] = 0
