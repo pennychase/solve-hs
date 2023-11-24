@@ -4,7 +4,7 @@ module MyList where
 
 import Prelude (Bool(..), error, Int, (-), (+), (*), (&&), (||), Ord(..), ($), Maybe(..), Eq(..), Ordering(..), Monad(..), (<$>), Show(..), not, undefined)
 
-data MyList a = 
+data MyList a =
   Nil |
   Cons a (MyList a)
   deriving (Show, Eq)
@@ -42,7 +42,7 @@ last' (Cons x xs) = last' xs
 -- We're looking for the first element that satisfies the predicate.
 find' :: (a -> Bool) -> MyList a -> Maybe a
 find' _ Nil = Nothing
-find' pred (Cons x xs) = 
+find' pred (Cons x xs) =
   if pred x
     then Just x
     else find' pred xs
@@ -53,10 +53,7 @@ elem' y (Cons x xs) = (x == y) || elem' y xs
 
 and' :: MyList Bool -> Bool
 and' Nil = True
-and' (Cons x xs) = 
-  if x
-    then and' xs
-    else False
+and' (Cons x xs) = x && and' xs
 
 or' :: MyList Bool -> Bool
 or' Nil = False
@@ -80,7 +77,7 @@ isInfixOf' Nil _ = True
 isInfixOf' (Cons _ _) Nil = False
 isInfixOf' ls@(Cons x xs) ls'@(Cons y ys) =
   isPrefixOf' ls ls' || isInfixOf' ls ys
- 
+
 
 -- Module 1 Lecture 3
 -- Recusion with Accumulation
@@ -108,39 +105,71 @@ minimum' (Cons x xs) = min x (minimum' xs)
 
 elemIndex' :: (Eq a) => a -> MyList a -> Maybe Int
 elemIndex' _ Nil = Nothing
-elemIndex' y (Cons x xs) = 
-  if x == y 
-    then Just 0 
+elemIndex' y (Cons x xs) =
+  if x == y
+    then Just 0
     else (1+) <$> elemIndex' y xs
 
 -- Module 1 Lecture 4
 -- Tail Recursion
 sum'' :: MyList Int -> Int
-sum'' = undefined
+sum'' = go 0
+  where
+    go accum Nil = accum
+    go accum (Cons x xs) = go (x + accum) xs
 
 product'' :: MyList Int -> Int
-product'' = undefined
+product'' = go 1
+  where
+    go accum Nil = accum
+    go accum (Cons x xs) = go (x * accum) xs
 
 and'' :: MyList Bool -> Bool
-and'' = undefined
+and'' = go True
+  where
+    go accum Nil = accum
+    go accum (Cons x xs) = go (x && accum) xs
 
 or'' :: MyList Bool -> Bool
-or'' = undefined
+or'' = go False
+  where
+    go accum Nil = accum
+    go accum (Cons x xs) = go (x || accum) xs
 
 any'' :: (a -> Bool) -> MyList a -> Bool
-any'' = undefined
+any'' pred = go False
+  where
+    go accum Nil = accum
+    go accum (Cons x xs) = go (pred x || accum) xs
 
 all'' :: (a -> Bool) -> MyList a -> Bool
-all'' = undefined
+all'' pred = go True
+  where
+    go accum Nil = accum
+    go accum (Cons x xs) = go (pred x && accum) xs
 
 maximum'' :: (Ord a) => MyList a -> a
-maximum'' = undefined
+maximum'' Nil = error "No elements"
+maximum'' (Cons x xs) = go x xs
+  where
+    go accum Nil = accum
+    go accum (Cons x xs) = go (max x accum) xs
 
 minimum'' :: (Ord a) => MyList a -> a
-minimum'' = undefined
+minimum'' Nil = error "No elements"
+minimum'' (Cons x xs) = go x xs
+  where
+    go accum Nil = accum
+    go accum (Cons x xs) = go (min x accum) xs
 
 elemIndex'' :: (Eq a) => a -> MyList a -> Maybe Int
-elemIndex'' = undefined
+elemIndex'' e = go (Just 0)
+  where
+    go accum Nil = Nothing
+    go accum (Cons x xs) =
+      if x == e
+        then accum
+        else go ((+1) <$> accum) xs
 
 -- Module 1 Lecture 5
 -- List Accumulation
