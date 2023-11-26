@@ -174,38 +174,76 @@ elemIndex'' e = go (Just 0)
 -- Module 1 Lecture 5
 -- List Accumulation
 reverse' :: MyList a -> MyList a
-reverse' = undefined
+reverse' = go Nil
+  where
+    go accum Nil = accum
+    go accum (Cons x xs) = go (Cons x accum) xs
 
 append' :: MyList a -> MyList a -> MyList a
-append' = undefined
+append' lis1 lis2 = go lis2 (reverse' lis1) 
+  where
+    go accum Nil = accum
+    go accum (Cons x xs) = go (Cons x accum) xs
 
 findIndices' :: (a -> Bool) -> MyList a -> MyList Int
-findIndices' = undefined
+findIndices' pred = go 0 Nil 
+  where
+    go _ accum Nil = reverse' accum
+    go i accum (Cons x xs) =
+      if pred x
+        then go (i + 1) (Cons i accum) xs
+        else go (i + 1) accum xs 
 
 isSuffixOf' :: (Eq a) => MyList a -> MyList a -> Bool
-isSuffixOf' = undefined
+isSuffixOf' lis1 lis2 = isPrefixOf' (reverse' lis1) (reverse' lis2)
 
 map' :: (a -> b) -> MyList a -> MyList b
-map' = undefined
+map' f = go Nil 
+  where
+    go accum Nil = reverse' accum
+    go accum (Cons x xs) = go (Cons (f x) accum) xs
 
 filter' :: (a -> Bool) -> MyList a -> MyList a
-filter' = undefined
+filter' pred = go Nil
+  where
+    go accum Nil = reverse' accum
+    go accum (Cons x xs) =
+      if pred x
+        then go (Cons x accum) xs
+        else go accum xs
 
 snoc' :: MyList a -> a -> MyList a
-snoc' = undefined
+snoc' lis = go Nil lis
+  where
+    go accum Nil a = reverse' (Cons a accum)
+    go accum (Cons x xs) a = go (Cons x accum) xs a
+
 
 init' :: MyList a -> MyList a
-init' = undefined
+init' lis = go Nil lis
+  where 
+    go accum lis =
+      case lis of
+        Nil -> error "Can't take init of empty list"
+        (Cons x Nil) -> reverse' accum
+        (Cons x xs) -> go (Cons x accum) xs
 
 concat' :: MyList (MyList a) -> MyList a
-concat' = undefined
+concat' = go Nil
+  where
+    go accum Nil = reverse' accum
+    go accum (Cons l ls) = go (append' (reverse' l) accum) ls
 
 -- E.g. concatMap' (\a -> [a + 1, a + 2, a + 3]) [1, 5] = [2, 3, 4, 6, 7, 9]
 concatMap' :: (a -> MyList b) -> MyList a -> MyList b
-concatMap' = undefined
+concatMap' f ls = concat' (map' f ls)
 
 zip' :: MyList a -> MyList b -> MyList (a, b)
-zip' = undefined
+zip' = go Nil
+  where
+    go accum Nil _ = reverse' accum
+    go accum _ Nil = reverse' accum
+    go accum (Cons x xs) (Cons y ys) = go (Cons (x, y) accum) xs ys
 
 -- Module 1 Lecture 6
 -- Folding
