@@ -29,6 +29,7 @@ dependencies:
 - directory
 - filepath
 - exceptions
+- extra
 - hashable
 - monad-logger
 - mtl
