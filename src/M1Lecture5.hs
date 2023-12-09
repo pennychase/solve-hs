@@ -18,7 +18,7 @@ palindrome input =
 allFactors :: [Int] -> [Int]
 allFactors [] = []
 allFactors nums =
-    filter isAFactor [1 .. maximum (nums)]
+    filter isAFactor [1 .. maximum nums]
     where 
         isAFactor n = any (\x -> x `mod` n == 0) nums
 
