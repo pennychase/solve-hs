@@ -248,39 +248,64 @@ zip' = go Nil
 -- Module 1 Lecture 6
 -- Folding
 foldl'' :: (b -> a -> b) -> b -> MyList a -> b
-foldl'' = undefined
+foldl'' f b Nil = b
+foldl'' f b (Cons a as)  = foldl'' f (f b a) as
 
 foldr' :: (a -> b -> b) -> b -> MyList a -> b
-foldr' = undefined
+foldr' f b Nil = b
+foldr' f b (Cons a as) = f a (foldr' f b as)
 
 scanl' :: (b -> a -> b) -> b -> MyList a -> MyList b
-scanl' = undefined
+scanl' f start = go (Cons start Nil)
+  where 
+    go accum Nil = reverse' accum
+    go accum@(Cons b bs) (Cons a as) = go (Cons (f b a) accum) as
 
 sum''' :: MyList Int -> Int
-sum''' = undefined
+sum''' = foldr' (+) 0
 
 map'' :: (a -> b) -> MyList a -> MyList b
-map'' = undefined
+map'' f  = foldr' (\x y -> (Cons (f x) y)) Nil 
 
 -- Module 1 Lecture 7
 -- Sorting, Grouping and HOF Patterns
 maximumBy' :: (a -> a -> Ordering) -> MyList a -> a
-maximumBy' = undefined
+maximumBy' _ Nil = error "Empty list"
+maximumBy' cmp (Cons x xs) = foldr' cmp' x xs
+  where
+    cmp' y m =
+      case cmp y m of
+        LT -> m
+        EQ -> m
+        GT -> y
 
 sortBy' :: (a -> a -> Ordering) -> MyList a -> MyList a
-sortBy' = undefined
-
+sortBy' _ Nil = Nil
+sortBy' _ (Cons x Nil) = Cons x Nil
+sortBy' cmp (Cons x xs) = left `append'` (Cons x right)
+  where
+    left = sortBy' cmp  $ filter' (\y -> cmp y x == LT) xs
+    right = sortBy' cmp $ filter' (\y -> cmp y x /= LT) xs 
+    
 sort' :: (Ord a) => MyList a -> MyList a
-sort' = undefined
+sort' = sortBy' compare
 
 sortOn' :: (Ord b) => (a -> b) -> MyList a -> MyList a
-sortOn' = undefined
+sortOn' _ Nil = Nil
+sortOn' f xs = sortBy' (\x y -> compare (f x) (f y)) xs
 
 groupBy' :: (a -> a -> Bool) -> MyList a -> MyList (MyList a)
-groupBy' = undefined
+groupBy' _ Nil = Nil
+groupBy' f (Cons x xs) = reverse' $ go (Cons x Nil) Nil xs
+  where
+    go grp grps Nil = Cons grp grps
+    go grp grps (Cons x xs) =
+      if f (head' grp) x
+        then go (Cons x grp) grps xs
+        else go (Cons x Nil) (Cons (reverse' grp) grps) xs
 
 group' :: (Eq a) => MyList a -> MyList (MyList a)
-group' = undefined
+group' = groupBy' (==)
 
 -- Module 1 Lecture 8
 -- Set Functions
