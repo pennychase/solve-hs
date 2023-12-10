@@ -298,7 +298,7 @@ groupBy' :: (a -> a -> Bool) -> MyList a -> MyList (MyList a)
 groupBy' _ Nil = Nil
 groupBy' f (Cons x xs) = reverse' $ go (Cons x Nil) Nil xs
   where
-    go grp grps Nil = Cons grp grps
+    go grp grps Nil = Cons (reverse' grp) grps
     go grp grps (Cons x xs) =
       if f (head' grp) x
         then go (Cons x grp) grps xs
