@@ -61,27 +61,10 @@ buildMaze mazeString numRows =
         'x' -> True
 
 
--- buildMaze :: String -> Int -> [[((Int, Int), Bool)]]
--- buildMaze mazeString numRows = map (uncurry makeRow) (zip [0 .. numRows - 1] (chunksOf numCols mazeString))
---   where
---     numCols = length mazeString `div` numRows
---     makeRow numRow row = map mkCell (zip coords row)
---       where
---         coords = zip (repeat numRow) [0 .. numCols]
---         cToBool c =
---           case c of
---             '.' -> False
---             'x' -> True
---         mkCell (coord, c) = (coord, cToBool c)
---         chunksOf :: Int -> [a] -> [[a]]
---         chunksOf _ [] = []
---         chunksOf n lst = first : chunksOf  n rest
---           where
---             (first, rest) = splitAt n lst
-
 incrementingChunks :: [Int] -> [[Int]]
 incrementingChunks numbers = groupBy''(\x y -> x + 1 == y) numbers
 
+-- Impemented the groupBy' in MyList for regular lists - it tests adjacent elements
 groupBy'' :: (a -> a -> Bool) ->  [a] -> [[a]]
 groupBy'' _ [] = []
 groupBy'' f (x : xs) = reverse $ go [x] [] xs
