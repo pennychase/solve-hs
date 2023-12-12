@@ -310,16 +310,27 @@ group' = groupBy' (==)
 -- Module 1 Lecture 8
 -- Set Functions
 nub' :: (Eq a) => MyList a -> MyList a
-nub' = undefined
-
+nub' Nil = Nil
+nub' ys = reverse' $ foldl'' (\xs x -> if x `elem'` xs then xs else Cons x xs) Nil ys
+ 
 delete' :: (Eq a) => a -> MyList a -> MyList a
-delete' = undefined
+delete' e lis = go Nil lis
+  where
+    go accum Nil = reverse' accum
+    go accum (Cons x xs) = if e == x
+      then append' (reverse' accum) xs
+      else go (Cons x accum) xs
 
 intersect' :: (Eq a) => MyList a -> MyList a -> MyList a
-intersect' = undefined
+intersect' _ Nil = Nil
+intersect' lis1 lis2 = foldr' (\x xs -> if x `elem'` lis2' then Cons x xs else xs) Nil lis1
+  where 
+    lis2' = nub' lis2
 
 union' :: (Eq a) => MyList a -> MyList a -> MyList a
-union' = undefined
+union' lis1 Nil = lis1
+union' lis1 lis2 = reverse' $ 
+  foldl'' (\xs x -> if x `elem'` lis1 then xs else Cons x xs) (reverse' lis1) (nub' lis2)
 
 -- Module 1 Lecture 9
 -- Monadic Functions
