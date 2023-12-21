@@ -2,7 +2,7 @@
 
 module MyList where
 
-import Prelude (Bool(..), error, Int, (-), (+), (*), (&&), (||), Ord(..), ($), Maybe(..), Eq(..), Ordering(..), Monad(..), (<$>), Show(..), not, undefined)
+import Prelude (putStrLn, IO, (<>), Bool(..), error, Int, (-), (+), (*), (&&), (||), Ord(..), ($), Maybe(..), Eq(..), Ordering(..), Monad(..), (<$>), Show(..), not, undefined)
 
 data MyList a =
   Nil |
@@ -335,10 +335,27 @@ union' lis1 lis2 = reverse' $
 -- Module 1 Lecture 9
 -- Monadic Functions
 mapM' :: (Monad m) => (a -> m b) -> MyList a -> m (MyList b)
-mapM' = undefined
+mapM' _ Nil = return Nil
+mapM' f (Cons x xs) = do
+  r <- f x
+  rs <- mapM' f xs
+  return $ Cons r rs
 
 foldM' :: (Monad m) => (b -> a -> m b) -> b -> MyList a -> m b
-foldM' = undefined
-
+foldM' _ b Nil = return b
+foldM' f b (Cons x xs) = do
+  r <- f b x
+  foldM' f r xs
+  
 sequence' :: (Monad m) => MyList (m a) -> m (MyList a)
-sequence' = undefined
+sequence' Nil = return Nil
+sequence' (Cons x xs) = do
+  r <- x
+  rs <- sequence' xs
+  return $ Cons r rs
+
+-- for testing monadic functions
+printAdd :: Int -> Int -> IO Int
+printAdd x y = do
+  putStrLn $ "Add " <> show x <> " " <> show y
+  return $ x + y
