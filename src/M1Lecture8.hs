@@ -44,7 +44,7 @@ traverse2D start dirs =
         f (coord, coords) dir = 
             let next = stepD4 coord dir
             in (next, next : coords)
-
+ 
             
 smallestMultiples :: [Int] -> [Int] -> [Int]
 smallestMultiples search modulos = f [] (L.sort search) modulos
