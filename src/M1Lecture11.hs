@@ -1,20 +1,78 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TupleSections #-}
+{-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE NamedFieldPuns #-}
 
 module M1Lecture11 where
 
 import Control.Monad (foldM)
-import Control.Monad.Logger (MonadLogger)
+import Control.Monad.Logger
 import Data.List (sortOn, sort, nub, elemIndices)
+import Data.Text (pack)
 
+-- To run: runStdoutLoggingT $ countIntervalsExcludingSpikes [(1,3), (5,8), (6,10)] [1, 2, 3]
 countIntervalsExcludingSpikes :: (MonadLogger m) => [(Int, Int)] -> [Int] -> m Int
-countIntervalsExcludingSpikes intervals spikes = undefined
+countIntervalsExcludingSpikes intervals spikes = do
+  logDebugN $ pack $ "running"
+  return $ intervalSizes intervals' - length (filter (\s -> any (inInterval s) intervals') spikes)
+    where
+      intervals' = makeDisjointIntervals intervals
+
+      inInterval :: Int -> (Int, Int) -> Bool
+      inInterval n (s, e) = n >= s && n <= e
+
+      intervalSizes :: [(Int, Int)]  -> Int
+      intervalSizes = foldr (\(x, y) zs -> (y-x+1) + zs) 0 
+
+      makeDisjointIntervals :: [(Int, Int)] -> [(Int, Int)]
+      makeDisjointIntervals intervals = reverse $ go [] (sortOn fst intervals)
+        where
+          go accum [] = accum
+          go accum [i] = i : accum
+          go accum (i1 : i2 : rest) = 
+            let
+              xs = makeDisjoint i1 i2
+            in go (head xs : accum)  ((tail xs) <> rest)
+          makeDisjoint (s1, e1) (s2, e2)
+            | e1 <= s2 = [(s1, e1), (s2, e2)]
+            | e1 > s2 && e1 < e2 = [(s1, s2), (s2+1, e2)] 
+                  | e1 > s2 && e1 >= e2 = [(s1, e1)]
 
 backpackMeals :: (MonadLogger m) => Int -> [Int] -> [Int] -> m Int
-backpackMeals maxWeight breakfasts lunches = undefined
+backpackMeals _ [] _ = pure 0
+backpackMeals _ _ [] = pure 0
+backpackMeals maxWeight breakfasts lunches = 
+  pure $ if res == [] then 0 else maximum res
+  where
+    res = filter (<= maxWeight) $ [b + l | b <- breakfasts, l <- lunches]
+  
+
 
 stackBoxes :: (MonadLogger m) => [String] -> [(Int, Int, Int)] -> m String
-stackBoxes stacks moves = undefined
+stackBoxes stacks [] = pure $ concat stacks
+stackBoxes stacks ((s,d,n) : moves) =
+  stackBoxes (insertAt d dest (insertAt s src stacks)) moves
+  where
+      (src, dest) = move (stacks !! s) (stacks !! d) n
+
+      move :: String -> String -> Int -> (String, String)
+      move src dest n =(newSrc, newDest)
+        where
+          (boxes, newSrc) = splitAt n src
+          newDest = foldl (flip (<>)) dest $ chunks 2 boxes
+
+      chunks :: Int -> [a] -> [[a]]
+      chunks _ [] = []
+      chunks n xs = chunk : chunks n rest 
+        where
+          (chunk, rest) = splitAt n xs
+
+      insertAt :: Int -> a -> [a] -> [a]
+      insertAt n new lst = 
+        let
+          (first, rest) = splitAt n lst
+        in first <> (new : tail rest)
+
 
 data Register = Eax | Ebx | Ecx
   deriving (Show, Eq, Enum)
@@ -27,9 +85,43 @@ data Command =
   SubRegister Register Register |
   MultRegister Register Register |
   PrintRegister Register
+  deriving Show
+
+data Machine = 
+  Machine {
+      eax :: Int
+    , ebx :: Int
+    , ecx :: Int
+    , output :: [Int]
+  }
+  deriving Show
 
 runAssembly :: (MonadLogger m) => [Command] -> m [Int]
-runAssembly commands = undefined
+runAssembly commands = do 
+  let initial = Machine 0 0 0 []
+  final <- foldM runInstr initial commands
+  pure $ reverse $ output final
+
+runInstr :: (MonadLogger m) => Machine -> Command -> m Machine
+runInstr m@(Machine {..}) instr = do
+  logDebugN $ pack $ show instr <> ": " <> show m 
+  pure $ case instr of
+    PrintRegister reg -> m { output = getReg m reg : output}
+    LoadValue reg val -> putReg m reg val
+    AddRegister r1 r2 -> putReg m r1 (getReg m r1 + getReg m r2)
+    SubRegister r1 r2 -> putReg m r1 (getReg m r1 - getReg m r2)
+    MultRegister r1 r2 -> putReg m r1 (getReg m r1 * getReg m r2)
+
+getReg :: Machine -> Register -> Int
+getReg Machine {..} Eax =  eax 
+getReg Machine {..} Ebx =  ebx 
+getReg Machine {..} Ecx =  ecx 
+
+putReg :: Machine -> Register -> Int -> Machine
+putReg m@Machine {..} Eax val =  m { eax = val}
+putReg m@Machine {..} Ebx val =  m { ebx = val}
+putReg m@Machine {..} Ecx val =  m { ecx = val}
+
 
 wordSearch :: (MonadLogger m) => String -> [[Char]] -> m Bool
 wordSearch input grid = undefined
