@@ -7,7 +7,7 @@ module M1Lecture11 where
 
 import Control.Monad (foldM)
 import Control.Monad.Logger
-import Data.List (sortOn, sort, nub, elemIndices, tails, isPrefixOf, transpose)
+import Data.List (sortOn, sort, nub, elemIndices, tails, isPrefixOf, transpose, findIndex, findIndices, delete)
 import Data.Text (pack)
 
 -- To run: runStdoutLoggingT $ countIntervalsExcludingSpikes [(1,3), (5,8), (6,10)] [1, 2, 3]
@@ -131,11 +131,10 @@ wordSearch input grid
   | any (searchOne input) (transpose grid) = pure True              -- columns
   | any (searchOne (reverse input)) (transpose grid) = pure True    -- reverse columns
   | any (searchOne input) diagonals = pure True                     -- diagonals
-  | any (searchOne (reverse input)) diagonals = pure True          -- reverse diagonals
+  | any (searchOne (reverse input)) diagonals = pure True           -- reverse diagonals
   | otherwise = pure False
   where
-
-    diagonals = diags grid <> diags (transpose (reverse grid))
+    diagonals = diags grid <> diags (transpose (reverse grid))      -- (transpose . reverse) rotates grid
 
     searchOne :: String -> String -> Bool
     searchOne input str = any (uncurry isPrefixOf . (input,)) (tails str)
@@ -150,4 +149,20 @@ wordSearch input grid
         lowerDiag = [[(x,y) | x <- [lastRow,lastRow-1 .. 0], y <- [lastRow,lastRow-1 ..0], y == x - i] | i <- [0 .. lastRow]]
 
 hiddenMessage :: (MonadLogger m) => [String] -> m String
-hiddenMessage inputs = undefined
+hiddenMessage inputs = pure $ f "" inputs
+  where 
+    f accum strs =
+      case findNext strs of
+        Nothing -> reverse accum
+        Just c -> f (c : accum) (map (delete c) strs)
+
+    -- Finds the next letter in the message. For the first letter in each string, see if it's in the
+    -- remaining letters of each string. The letter that doesn't appear in any string is the next letter
+    -- (since the letters in each string appear in the correct order)
+    findNext :: [String] -> Maybe Char
+    findNext strs = 
+      (cs !!) <$> findIndex null is
+      where
+        strs' = filter (not . null) strs
+        cs = nub . map head $ strs'
+        is = map (\x -> findIndices (elem x) (map tail strs')) cs
