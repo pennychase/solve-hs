@@ -7,7 +7,7 @@ module M1Lecture11 where
 
 import Control.Monad (foldM)
 import Control.Monad.Logger
-import Data.List (sortOn, sort, nub, elemIndices)
+import Data.List (sortOn, sort, nub, elemIndices, tails, isPrefixOf, transpose)
 import Data.Text (pack)
 
 -- To run: runStdoutLoggingT $ countIntervalsExcludingSpikes [(1,3), (5,8), (6,10)] [1, 2, 3]
@@ -22,30 +22,30 @@ countIntervalsExcludingSpikes intervals spikes = do
       inInterval n (s, e) = n >= s && n <= e
 
       intervalSizes :: [(Int, Int)]  -> Int
-      intervalSizes = foldr (\(x, y) zs -> (y-x+1) + zs) 0 
+      intervalSizes = foldr (\(x, y) zs -> (y-x+1) + zs) 0
 
       makeDisjointIntervals :: [(Int, Int)] -> [(Int, Int)]
       makeDisjointIntervals intervals = reverse $ go [] (sortOn fst intervals)
         where
           go accum [] = accum
           go accum [i] = i : accum
-          go accum (i1 : i2 : rest) = 
+          go accum (i1 : i2 : rest) =
             let
               xs = makeDisjoint i1 i2
             in go (head xs : accum)  ((tail xs) <> rest)
           makeDisjoint (s1, e1) (s2, e2)
             | e1 <= s2 = [(s1, e1), (s2, e2)]
-            | e1 > s2 && e1 < e2 = [(s1, s2), (s2+1, e2)] 
+            | e1 > s2 && e1 < e2 = [(s1, s2), (s2+1, e2)]
                   | e1 > s2 && e1 >= e2 = [(s1, e1)]
 
 backpackMeals :: (MonadLogger m) => Int -> [Int] -> [Int] -> m Int
 backpackMeals _ [] _ = pure 0
 backpackMeals _ _ [] = pure 0
-backpackMeals maxWeight breakfasts lunches = 
+backpackMeals maxWeight breakfasts lunches =
   pure $ if res == [] then 0 else maximum res
   where
     res = filter (<= maxWeight) $ [b + l | b <- breakfasts, l <- lunches]
-  
+
 
 
 stackBoxes :: (MonadLogger m) => [String] -> [(Int, Int, Int)] -> m String
@@ -63,12 +63,12 @@ stackBoxes stacks ((s,d,n) : moves) =
 
       chunks :: Int -> [a] -> [[a]]
       chunks _ [] = []
-      chunks n xs = chunk : chunks n rest 
+      chunks n xs = chunk : chunks n rest
         where
           (chunk, rest) = splitAt n xs
 
       insertAt :: Int -> a -> [a] -> [a]
-      insertAt n new lst = 
+      insertAt n new lst =
         let
           (first, rest) = splitAt n lst
         in first <> (new : tail rest)
@@ -87,7 +87,7 @@ data Command =
   PrintRegister Register
   deriving Show
 
-data Machine = 
+data Machine =
   Machine {
       eax :: Int
     , ebx :: Int
@@ -97,14 +97,14 @@ data Machine =
   deriving Show
 
 runAssembly :: (MonadLogger m) => [Command] -> m [Int]
-runAssembly commands = do 
+runAssembly commands = do
   let initial = Machine 0 0 0 []
   final <- foldM runInstr initial commands
   pure $ reverse $ output final
 
 runInstr :: (MonadLogger m) => Machine -> Command -> m Machine
 runInstr m@(Machine {..}) instr = do
-  logDebugN $ pack $ show instr <> ": " <> show m 
+  logDebugN $ pack $ show instr <> ": " <> show m
   pure $ case instr of
     PrintRegister reg -> m { output = getReg m reg : output}
     LoadValue reg val -> putReg m reg val
@@ -112,10 +112,11 @@ runInstr m@(Machine {..}) instr = do
     SubRegister r1 r2 -> putReg m r1 (getReg m r1 - getReg m r2)
     MultRegister r1 r2 -> putReg m r1 (getReg m r1 * getReg m r2)
 
+
 getReg :: Machine -> Register -> Int
-getReg Machine {..} Eax =  eax 
-getReg Machine {..} Ebx =  ebx 
-getReg Machine {..} Ecx =  ecx 
+getReg Machine {..} Eax =  eax
+getReg Machine {..} Ebx =  ebx
+getReg Machine {..} Ecx =  ecx
 
 putReg :: Machine -> Register -> Int -> Machine
 putReg m@Machine {..} Eax val =  m { eax = val}
@@ -124,7 +125,29 @@ putReg m@Machine {..} Ecx val =  m { ecx = val}
 
 
 wordSearch :: (MonadLogger m) => String -> [[Char]] -> m Bool
-wordSearch input grid = undefined
+wordSearch input grid
+  | any (searchOne input) grid = pure True                          -- rows
+  | any (searchOne (reverse input)) grid = pure True                -- reverse rows
+  | any (searchOne input) (transpose grid) = pure True              -- columns
+  | any (searchOne (reverse input)) (transpose grid) = pure True    -- reverse columns
+  | any (searchOne input) diagonals = pure True                     -- diagonals
+  | any (searchOne (reverse input)) diagonals = pure True          -- reverse diagonals
+  | otherwise = pure False
+  where
+
+    diagonals = diags grid <> diags (transpose (reverse grid))
+
+    searchOne :: String -> String -> Bool
+    searchOne input str = any (uncurry isPrefixOf . (input,)) (tails str)
+
+    diags :: [String] -> [String]
+    diags grid = 
+      map (map (\(x, y) -> (grid !! x) !!y)) (upperDiag <> lowerDiag)
+      where
+        lastRow = length grid - 1
+        lastCol = length (head grid) - 1
+        upperDiag = [[ (x, y) | x <- [0 .. lastRow], y <- [0 .. lastCol], y == x + i] | i <- [0 .. lastRow]]
+        lowerDiag = [[(x,y) | x <- [lastRow,lastRow-1 .. 0], y <- [lastRow,lastRow-1 ..0], y == x - i] | i <- [0 .. lastRow]]
 
 hiddenMessage :: (MonadLogger m) => [String] -> m String
 hiddenMessage inputs = undefined
