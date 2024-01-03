@@ -5,6 +5,8 @@ import Control.Monad.Fail
 import Control.Monad.Logger
 import qualified Data.Set as S
 import Data.List (sort)
+import Data.Sequence (Seq( (:<|)), (|>))
+import qualified Data.Sequence as Seq
 
 import Utils
 
@@ -31,7 +33,15 @@ compartmentalize input numBuckets =
 
 
 traverse2D4P :: Coord2 -> [Direction4] -> Int
-traverse2D4P start dirs = undefined
+traverse2D4P start dirs = S.size . snd $ foldr move1P (players, visitedCoords) dirs
+  where
+    players = Seq.fromList $ replicate 4 start
+    visitedCoords = S.singleton start
+
+    move1P :: Direction4 -> (Seq Coord2, S.Set Coord2) -> (Seq Coord2, S.Set Coord2) 
+    move1P dir ( position :<| positions, coords) =
+      let coord' = stepD4 position dir
+      in (positions |> coord', S.insert coord' coords)
 
 data LightCommand = On | Off | Toggle
   deriving (Show, Eq)
