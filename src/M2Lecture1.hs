@@ -3,10 +3,12 @@ module M2Lecture1 where
 
 import Control.Monad.Fail
 import Control.Monad.Logger
+import Control.Monad (foldM)
 import qualified Data.Set as S
 import Data.List (sort)
 import Data.Sequence (Seq( (:<|)), (|>))
 import qualified Data.Sequence as Seq
+import qualified Data.Text as T
 
 import Utils
 
@@ -63,8 +65,25 @@ treeVisibility :: (MonadLogger m) =>
   (Coord2, Coord2, Coord2) -> ([Coord2], [Coord2], [Coord2]) -> m Int
 treeVisibility (l1, l2, l3) (tree1s, tree2s, tree3s) = undefined
 
+-- Use a set to keep track of the coordinates with pellets. As the path is traversed
+-- if there's a pellet on a cell, delete it from the set. At the end, the number of pellets
+-- picked up is the size of the original set - the size of the final set (i.e., pellets
+-- that weren't picked up)
 collectPellets :: (MonadLogger m) => [Coord2] -> [(Direction4, Word)] -> m Int
-collectPellets pellets dirs = undefined
+collectPellets pellets dirs = pure $ S.size initial - S.size final
+  where 
+    initial = S.fromList pellets
+    (_, final) = foldl collectHelper ((0,0), initial) dirs
+
+    collectHelper :: (Coord2, S.Set Coord2) -> (Direction4, Word) -> (Coord2, S.Set Coord2)
+    collectHelper (position, pelletSet) (dir, n) =  iterate oneStep (position, pelletSet) !! fromIntegral n
+      where     
+        oneStep (pos, ps) = 
+          let
+            newPos = stepD4 pos dir
+            newPs = S.delete newPos ps
+          in (newPos, newPs)
+
 
 gameOfLife :: (MonadLogger m) => Coord2 -> S.Set Coord2 -> m (S.Set Coord2)
 gameOfLife (numCols, numRows) aliveSet = undefined
