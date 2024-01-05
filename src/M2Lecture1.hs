@@ -9,6 +9,7 @@ import Data.List (sort)
 import Data.Sequence (Seq( (:<|)), (|>))
 import qualified Data.Sequence as Seq
 import qualified Data.Text as T
+import Debug.Trace
 
 import Utils
 
@@ -84,6 +85,34 @@ collectPellets pellets dirs = pure $ S.size initial - S.size final
             newPs = S.delete newPos ps
           in (newPos, newPs)
 
+-- Game of life that does a single generation
+-- The aliveSet argument to gameOfLife is used to determine the neighbors of cells ensuring that each
+-- cell's exsistence is based on the current set of alive cells. The function that determines liveness
+-- for each cell uses aliveS (initially passed aliveSet) to modify the cell fior the next generation
 
+-- Logging version
 gameOfLife :: (MonadLogger m) => Coord2 -> S.Set Coord2 -> m (S.Set Coord2)
-gameOfLife (numCols, numRows) aliveSet = undefined
+gameOfLife (numCols, numRows) aliveSet = do
+  let cells = [(r, c)| r <- [0 .. numRows-1], c <- [0 .. numCols-1]]
+  foldM (flip oneCell) aliveSet cells
+  where
+    oneCell :: (MonadLogger m) => Coord2 -> S.Set Coord2 -> m (S.Set Coord2)
+    oneCell cell@(x, y) aliveS = do
+      let neighbors = aliveSet `S.intersection` S.fromList [ (i + x, j + y) | i <- [-1,0,1], j <- [-1,0,1], (i,j) /= (0,0)]
+      -- logDebugN $ T.pack $ "Alive: " <> show aliveS <> " Cell: " <> show cell <> " Neighbors: " <> show neighbors
+      pure $ case S.member cell aliveS of
+        False -> if S.size neighbors == 3 then S.insert cell aliveS else aliveS
+        True -> if S.size neighbors == 2 || S.size neighbors == 3 then aliveS else S.delete cell aliveS
+
+-- Pure version       
+gameOfLife' :: (MonadLogger m) => Coord2 -> S.Set Coord2 -> m (S.Set Coord2)
+gameOfLife' (numCols, numRows) aliveSet = 
+  pure $ foldr oneCell aliveSet cells
+  where
+    cells = [(r, c)| r <- [0 .. numRows-1], c <- [0 .. numCols-1]]
+    oneCell cell@(x, y) aliveS =
+      case S.member cell aliveS of
+        False -> if S.size neighbors == 3 then S.insert cell aliveS else aliveS
+        True -> if S.size neighbors == 2 || S.size neighbors == 3 then aliveS else S.delete cell aliveS
+      where
+        neighbors = aliveSet `S.intersection` S.fromList [ (i + x, j + y) | i <- [-1,0,1], j <- [-1,0,1], (i,j) /= (0,0)]
