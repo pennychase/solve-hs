@@ -109,16 +109,25 @@ emptyOcc :: OccMapI a i
 emptyOcc = M.empty
 
 addKey :: (Ord a, Integral i) => OccMapI a i -> a -> i -> OccMapI a i
-addKey prevMap key count = undefined
+addKey prevMap key count = 
+  case M.lookup key prevMap of
+    Nothing -> M.insert key count prevMap
+    Just oldCount -> M.insert key (oldCount + count) prevMap
 
 incKey :: (Ord a, Integral i) => OccMapI a i -> a -> OccMapI a i
-incKey prevMap key = undefined
+incKey prevMap key = addKey prevMap key 1
 
 subKey :: (Ord a, Integral i) => OccMapI a i -> a -> i -> OccMapI a i
-subKey prevMap key count = undefined
+subKey prevMap key count = 
+  case M.lookup key prevMap of
+    Nothing -> prevMap
+    Just oldCount -> 
+      let 
+        newCount = oldCount - count
+      in if newCount <= 0 then M.delete key prevMap else M.insert key newCount prevMap
 
 decKey :: (Ord a, Integral i) => OccMapI a i -> a -> OccMapI a i
-decKey prevMap key = undefined
+decKey prevMap key = subKey prevMap key 1
 
 -- Graph Basics
 
