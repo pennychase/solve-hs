@@ -11,7 +11,18 @@ import M1Lecture10
 import Utils
 
 pickBestClump :: [Int] -> Int
-pickBestClump values = undefined
+pickBestClump [] = 0
+pickBestClump values = foldl pickClump 0 [minVal - 1 .. maxVal + 1]
+  where
+    occMap = foldl  incKey emptyOcc values
+    (minVal, _) = M.findMin occMap
+    (maxVal, _) = M.findMax occMap
+
+    getCount x = M.findWithDefault 0 x occMap
+
+    pickClump m x = if score > m then score else m
+      where
+        score = x * (getCount (x - 1) + getCount x + getCount (x + 1))
 
 directoryCounts :: (MonadLogger m) => [String] -> m [(String, Word)]
 directoryCounts inputs = undefined
@@ -54,4 +65,17 @@ data Instruction =
   Assign Int
 
 calculationGraph :: String -> [(String, Instruction)] -> Int
-calculationGraph root instrs = undefined
+calculationGraph root instrs = calculate root
+  where
+    graph = M.fromList instrs
+    calculate node = 
+      case M.lookup node graph of
+        Nothing -> error "Unknown variable"
+        Just (Assign val) -> val
+        Just (Dep arg1 arg2 op) -> apply op (calculate arg1) (calculate arg2)
+    apply op arg1 arg2 =
+      case op of
+        Add -> arg1 + arg2
+        Sub -> arg1 - arg2
+        Mult -> arg1 * arg2
+        Div -> arg1 `div` arg2
