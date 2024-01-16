@@ -1,3 +1,5 @@
+{-# LANGUAGE OverloadedStrings #-}
+
 module M2Lecture3 where
 
 import Control.Monad.Logger
@@ -6,6 +8,7 @@ import Data.Maybe (fromMaybe)
 import qualified Data.List as L
 import qualified Data.Set as S
 import qualified Data.Ord as O
+import qualified Data.Text as T
 
 import M1Lecture10
 import Utils
@@ -14,7 +17,7 @@ pickBestClump :: [Int] -> Int
 pickBestClump [] = 0
 pickBestClump values = foldl pickClump 0 [minVal - 1 .. maxVal + 1]
   where
-    occMap = foldl  incKey emptyOcc values
+    occMap = foldl incKey emptyOcc values
     (minVal, _) = M.findMin occMap
     (maxVal, _) = M.findMax occMap
 
@@ -25,10 +28,39 @@ pickBestClump values = foldl pickClump 0 [minVal - 1 .. maxVal + 1]
         score = x * (getCount (x - 1) + getCount x + getCount (x + 1))
 
 directoryCounts :: (MonadLogger m) => [String] -> m [(String, Word)]
-directoryCounts inputs = undefined
+directoryCounts inputs = return $ L.sortBy sortTuples $ M.toList $ foldl countPath emptyOcc inputs
+  where
+    -- Descending sort on counts and break ties with lexicographic sort of dir names
+    sortTuples (s1, c1) (s2, c2) =
+      case compare c1 c2 of
+        LT -> GT
+        GT -> LT
+        EQ -> compare s1 s2
+    -- split on "/" to create list of path elements. Reverse the list and drop the file, then recursively
+    -- count the items by adding 1 to the current item (current is the items beneath the current directory)
+    -- unless we've already seen it in another path (so we don't double count).
+    countPath :: OccMap String -> String -> OccMap String
+    countPath occMap path = go 1 occMap dirs
+      where
+        dirs = tail . map T.unpack . reverse $ T.splitOn "/" (T.tail (T.pack path)) -- strip leading "/" before split
+        go numItems counts [] = counts
+        go numItems counts (d:ds) = 
+          let
+            numItems' = if M.member d counts then numItems else numItems + 1
+          in go numItems' (addKey counts d numItems) ds
 
 algaeGrowth :: Int -> Int -> [Int] -> Integer
-algaeGrowth days growthRate startingValues = undefined
+algaeGrowth days growthRate startingValues = sum . M.elems $ evolveState update initial days
+  where
+    initial :: OccMapBig Int
+    initial = foldl incKey emptyOcc startingValues
+
+    update prevMap = 
+      case M.lookup 0 newMap of
+        Nothing -> newMap
+        Just count -> M.delete 0 $ addKey newMap growthRate (2 * count)
+      where
+        newMap = M.mapKeys pred prevMap
 
 data SparseMatrix = SparseMatrix
   deriving (Show, Eq)
