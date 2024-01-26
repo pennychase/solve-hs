@@ -63,19 +63,40 @@ algaeGrowth days growthRate startingValues = sum . M.elems $ evolveState update 
         newMap = M.mapKeys pred prevMap
 
 data SparseMatrix = SparseMatrix
-  deriving (Show, Eq)
-
+  { nRows :: Word
+  , nCols :: Word
+  , values :: M.Map (Word, Word) Double
+  } deriving (Show, Eq)
+  
 empty :: Word -> Word -> SparseMatrix
-empty numRows numCols = undefined
+empty numRows numCols = SparseMatrix numRows numCols M.empty
 
 set :: Word -> Word -> Double -> SparseMatrix -> SparseMatrix
-set row col val sparseMatrix = undefined
+set row col val sparseMatrix = sparseMatrix { values = values' }
+  where
+    values' = if val == 0.0
+                then M.delete (row, col) (values sparseMatrix)
+                else M.insert (row, col) val (values sparseMatrix)
+
+outOfBounds :: Word -> Word -> SparseMatrix -> Bool
+outOfBounds row col sparseMatrix =
+  row < 0 || row >= nRows sparseMatrix || col < 0 || col >= nCols sparseMatrix
 
 get :: Word -> Word -> SparseMatrix -> Double
-get row col sparseMatrix = undefined
+get row col sparseMatrix = 
+  if outOfBounds row col sparseMatrix
+    then error "Index is out of bounds"
+    else case M.lookup (row, col) (values sparseMatrix) of
+      Nothing -> 0.0
+      Just val -> val
 
 get' :: Word -> Word -> SparseMatrix -> Maybe Double
-get' row col sparseMatrix = undefined
+get' row col sparseMatrix = 
+  if outOfBounds row col sparseMatrix
+    then Nothing
+    else case M.lookup (row, col) (values sparseMatrix) of
+      Nothing -> Just 0.0
+      Just val -> Just val
 
 add :: SparseMatrix -> SparseMatrix -> SparseMatrix
 add matrix1 matrix2 = undefined
