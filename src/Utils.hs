@@ -140,23 +140,24 @@ type SimpleGraph = Graph String Int
 mkDirectedGraph :: (Hashable node) => [(node, node, cost)] -> Graph node cost
 mkDirectedGraph edges = Graph $ foldr f HM.empty edges
   where
-    f :: (Hashable node) =>
-      (node, node, cost) -> HM.HashMap node [(node, cost)] -> HM.HashMap node [(node, cost)]
-    f (n1, n2, c) prev =
-      let firstPrev = fromMaybe [] (HM.lookup n1 prev)
-          afterSecond = if not (HM.member n2 prev) then HM.insert n2 [] prev else prev
-      in  HM.insert n1 ((n2, c) : firstPrev) afterSecond
+    f :: (Hashable node) => (node, node, cost) -> HM.HashMap node [(node, cost)] -> HM.HashMap node [(node, cost)]
+    f (node1, node2, cost) graph =
+      let 
+        graph' = case HM.lookup node2 graph of
+          Nothing -> HM.insert node2 [] graph
+          Just _ -> graph
+        edges1 = fromMaybe [] (HM.lookup node1 graph')
+      in HM.insert node1 ((node2, cost) : edges1) graph'
 
 mkUndirectedGraph :: (Hashable node) => [(node, node, cost)] -> Graph node cost
 mkUndirectedGraph edges = Graph $ foldr f HM.empty edges
   where
-    f :: (Hashable node) =>
-      (node, node, cost) -> HM.HashMap node [(node, cost)] -> HM.HashMap node [(node, cost)]
-    f (n1, n2, c) prev =
-      let firstPrev = fromMaybe [] (HM.lookup n1 prev)
-          secondPrev = fromMaybe [] (HM.lookup n2 prev)
-          afterFirst = HM.insert n1 ((n2, c) : firstPrev) prev
-      in  HM.insert n2 ((n1, c) : secondPrev) afterFirst
+    f :: (Hashable node) => (node, node, cost) -> HM.HashMap node [(node, cost)] -> HM.HashMap node [(node, cost)]
+    f (node1, node2, cost) graph =
+      let 
+        edges1 = fromMaybe [] (HM.lookup node1 graph)
+        edges2 = fromMaybe [] (HM.lookup node2 graph)
+      in HM.insert node2 ((node1, cost) : edges2) (HM.insert node1 ((node2, cost) : edges1) graph)
 
 nodes :: (Hashable node) => Graph node cost -> [node]
 nodes (Graph es) = HM.keys es
@@ -168,9 +169,7 @@ graphNeighbors :: (Hashable node) => Graph node cost -> node -> [node]
 graphNeighbors graph n1 = map fst (graphNeighborCosts graph n1)
 
 graphCost :: (Hashable node) => Graph node cost -> node -> node -> Maybe cost
-graphCost graph n1 n2 = snd <$> L.find ((==) n2 . fst) assocs
-  where
-    assocs = graphNeighborCosts graph n1
+graphCost graph n1 n2 = lookup n2 $ graphNeighborCosts graph n1
 
 -- Huffman Tree
 data HuffmanTree =
