@@ -55,6 +55,17 @@ type Strike = (Coord2, Int, Direction8)
 powerStrikes :: (MonadLogger m) => Coord2 -> [Strike] -> m Int
 powerStrikes (numRows, numCols) strikes = undefined
 
+-- edgePower
+-- To run in cabal repl, use: runStdoutLoggerT $ edgePower edges node
+
+-- edgePower implements breadth first traversa; and edgePower' implements depth first
+-- Use an infinite list of [product, sum] to pass the combination function at each level
+-- (apply the head at the current level and pass the tail of the listb to the recursion)
+
+-- Need to keep the nodes we've seen to avoid cycles amnd track of the edges we've seen to
+-- avoid recomputation.
+
+-- Breadth First 
 edgePower :: (MonadLogger m) => [(String, String, Int)] -> String -> m Int
 edgePower edges start = do
   pure $ getResult $ f start (cycle [product, sum]) HS.empty HS.empty 0
@@ -78,11 +89,12 @@ edgePower edges start = do
     g [] _ edgesVisited nodesVisited accum = (accum, edgesVisited, nodesVisited)
     g nodes@(n:ns) fns edgesVisited nodesVisited accum = 
         let (result, edgesVisited', nodesVisited') = 
-               foldr (\x (acc, es, ns) -> f x fns es ns acc) (accum, edgesVisited, nodesVisited) nodes
+              foldr (\x (acc, es, ns) -> f x fns es ns acc) (accum, edgesVisited, nodesVisited) nodes
         in g ns fns edgesVisited' nodesVisited' result
 
     getResult (r, _, _) = r
-  
+
+-- Depth First
 edgePower' :: (MonadLogger m) => [(String, String, Int)] -> String -> m Int
 edgePower' edges start = do
   pure $ getResult $ f start (cycle [product, sum]) HS.empty HS.empty
