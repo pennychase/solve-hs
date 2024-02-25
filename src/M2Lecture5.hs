@@ -18,16 +18,40 @@ binarySearch :: (I.Ix i, Ord a) =>
   container a ->             -- Container
   a ->                       -- Desired Element
   Maybe i                    -- Result Index
-binarySearch indexF rng@(start,end) vals comp = undefined
+binarySearch indexF rng@(start,end) vals comp = 
+  f 0 sz
+  where
+    indices = V.fromList (I.range rng)
+    sz = I.rangeSize rng
+
+    f start' end' =
+      if start' >= end' 
+        then Nothing
+        else
+          case compare comp (indexF (indices V.! mid) vals) of
+            EQ -> Just (indices V.! mid)
+            LT -> f start' mid
+            GT -> f (mid + 1) end'
+      where
+        mid = (end' - start') `div` 2 + start'
 
 binarySearchV :: (Ord a) => V.Vector a -> a -> Maybe Int
-binarySearchV vals = undefined
+binarySearchV vals  = binarySearch (flip (V.!)) (0, V.length vals - 1)  vals
 
 binarySearchA :: (Ord a, I.Ix i) => A.Array i a -> a -> Maybe i
-binarySearchA vals = undefined
+binarySearchA vals = binarySearch (flip (A.!)) (A.bounds vals) vals
 
 addArrays :: (MonadLogger m) => [A.Array Int Int] -> m (A.Array Int Int)
-addArrays arrays = undefined
+addArrays arrays = 
+  pure $ A.listArray (minIndex, maxIndex) (map addAtIndex [minIndex .. maxIndex])
+  where
+    minIndex = minimum (map (fst . A.bounds) arrays)
+    maxIndex = maximum (map (snd . A.bounds) arrays)
+
+    getValue :: A.Array Int Int -> Int -> Int
+    getValue a i = if A.inRange (A.bounds a) i then a A.! i else 0
+
+    addAtIndex i = foldr (\a as -> (getValue a i) + as) 0 arrays
 
 treeVisibilityRedux :: (MonadLogger m) => (Coord2, Coord2, Coord2) -> A.Array Coord2 Int -> m Int
 treeVisibilityRedux (l1, l2, l3) trees = undefined
