@@ -29,6 +29,5 @@ Status
         - powerStrikes
     - Lecture 5 - To Do
         - treeVisibilityRedux
-        - functionPermutation
         - boggleSearch
         - bingoBoard

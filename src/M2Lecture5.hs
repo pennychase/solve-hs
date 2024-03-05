@@ -57,7 +57,12 @@ treeVisibilityRedux :: (MonadLogger m) => (Coord2, Coord2, Coord2) -> A.Array Co
 treeVisibilityRedux (l1, l2, l3) trees = undefined
 
 functionPermutation :: V.Vector Int -> V.Vector Int
-functionPermutation v = undefined
+functionPermutation v = V.fromList $ map f [0 .. V.length v - 1]
+  where
+    -- v' is the inverse of the function represented by v, i.e., if v[i] = j then v'[j] = i
+    v' = V.fromList $ map fst $ L.sortOn snd $ V.toList (V.indexed v)
+    f i = v' V.! (v' V.! i)
+      
 
 boggleSearch :: (MonadLogger m) => A.Array (Int, Int) Char -> String -> m Bool
 boggleSearch grid word = undefined
